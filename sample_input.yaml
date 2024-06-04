@@ -1,0 +1,9 @@
+starting_principal: 25_000
+monthly_contributions: 200
+compound_frequency: 12
+rate_of_return: .07
+current_age: 25
+retirement_age: 65
+life_expectancy: 90
+yearly_income_in_retirement: 20_000 # Pension, Social Security, etc...
+yearly_spend_in_retirement: 80_000
