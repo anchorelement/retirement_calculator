@@ -21,15 +21,14 @@ def calc_future_value(P: float, r: float, n: int, t: int, a: int, M=0) -> pd.Dat
         amount = P * (np.power((1 + r / n), n * (period + 1))) + M * (
             np.power((1 + r / n), n * period + 1) - 1
         ) / (r / n)
-        data.append({"Rate of Return": r, "Age": a + period, "Amount": amount})
+        if amount >= 0:
+            data.append({"Rate of Return": r, "Age": a + period, "Amount": amount})
     return pd.DataFrame(data=data, columns=["Age", "Rate of Return", "Amount"])
 
 
 # Load configuration file
 with open("sample_input.yaml") as config_file:
     config = yaml.safe_load(config_file)
-print(config)
-pd.options.display.float_format = "{:,.2f}".format
 P = config.get("starting_principal")
 M = config.get("monthly_contributions")
 n = config.get("compound_frequency")
@@ -41,27 +40,32 @@ retirement_age = config.get("retirement_age")
 life_expectancy = config.get("life_expectancy")
 t1 = retirement_age - age
 t2 = life_expectancy - retirement_age
-m_i_r = config.get("yearly_income_in_retirement")  # Pension, Social Security, etc...
-m_s_r = config.get("yearly_spend_in_retirement")
-I = float(m_i_r / 12)
-E = float(m_s_r / 12)
+y_i_r = config.get("yearly_income_in_retirement")  # Pension, Social Security, etc...
+y_s_r = config.get("yearly_spend_in_retirement")
+I = float(y_i_r / 12)
+E = float(y_s_r / 12)
 
-# Pre-retirement calculations
-df_pre = calc_future_value(P, r, n, t1, age, M)
-P2 = df_pre.max().get("Amount")
-
-# Post-retirement calculations
-df_post = calc_future_value(P2, r, n, t2, age + t1, I - E)
-
-results = pd.concat([df_pre, df_post])
-
-print(results)
+rates = [round(x, 2) for x in np.linspace(r - 0.02, r + 0.02, 5)]
+results = []
+for i in rates:
+    # Pre-retirement calculations
+    P1 = P
+    df_pre = calc_future_value(P1, i, n, t1, age, M)
+    # Post-retirement calculations
+    P2 = df_pre.max().get("Amount")
+    df_post = calc_future_value(P2, i, n, t2, age + t1, I - E)
+    results.append(pd.concat([df_pre, df_post]))
 
 # Setup graph visuals and styling
+pd.options.display.float_format = "{:,.2f}".format
 sns.set_theme(rc={"figure.figsize": (14, 9)}, style="darkgrid")
-plt.ticklabel_format(style="plain", axis="y")
+
 ax = sns.lineplot(
-    data=results, x="Age", y="Amount", hue="Rate of Return", palette="flare"
+    data=pd.concat(results),
+    x="Age",
+    y="Amount",
+    hue="Rate of Return",
+    palette=sns.color_palette(),
 )
 
 ax.set(
@@ -71,10 +75,6 @@ ax.set(
 
 ax.get_yaxis().set_major_formatter(
     mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ","))
-)
-
-ax.get_xaxis().set_major_formatter(
-    mpl.ticker.FuncFormatter(lambda x, p: format(int(x)))
 )
 
 plt.show()
