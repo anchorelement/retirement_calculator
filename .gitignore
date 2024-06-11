@@ -2,3 +2,5 @@ __pycache__/
 .venv
 .vscode
 input.yaml
+tester.py
+data.csv

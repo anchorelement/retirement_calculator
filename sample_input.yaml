@@ -1,9 +1,11 @@
 starting_principal: 25_000
-monthly_contributions: 200
+monthly_contributions: 500
 compound_frequency: 12
 rate_of_return: .07
+rate_of_inflation: 0.025
 current_age: 25
 retirement_age: 65
 life_expectancy: 90
 yearly_income_in_retirement: 20_000 # Pension, Social Security, etc...
-yearly_spend_in_retirement: 80_000
+yearly_spend_in_retirement: 70_000
+num_simulations: 100
