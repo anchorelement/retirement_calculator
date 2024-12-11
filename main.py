@@ -26,7 +26,7 @@ def retirement_projection(
     for period in range(t * 12):
         # Investment return
         current_rate = r[period]
-        current_principal = prior_principal * (1 + current_rate / 12)
+        current_principal = prior_principal * (1 + current_rate)
         # Contribution
         current_contribution = prior_contribution * (1 + inf / 12)
         # Calculate new amount
@@ -57,8 +57,8 @@ with open("sample_input.yaml") as config_file:
     config = yaml.safe_load(config_file)
 P = config.get("starting_principal")
 M = config.get("monthly_contributions")
-n = config.get("compound_frequency")
-r = config.get("rate_of_return")
+# n = config.get("compound_frequency")
+ror = config.get("rate_of_return")
 inf = config.get("rate_of_inflation")
 num_simulations = config.get("num_simulations")
 failed_simulations = 0
@@ -76,18 +76,20 @@ y_s_r = config.get("yearly_spend_in_retirement")
 I = float(y_i_r / 12)
 E = float(y_s_r / 12)
 
-# Configure normal distribution params
-loc = 0.06
-scale = 0.1
+# Configure distribution params
+# Convert the supplied yearly rate of return to a monthly value
+loc = np.power(1 + ror, 1 / 12) - 1
+print(loc)
+# scale = 0.0326
+scale = 0.01
 size = (t1 + t2) * 12
 
 data_frames = []
 
 for series in range(num_simulations):
-    rates = np.random.normal(loc, scale, size)
+    rates = np.random.laplace(loc, scale, size)
     df_pre = retirement_projection(P, rates, t1, age, inf, M, series)
     retirement_amount = df_pre.max().get("Amount")
-    print(retirement_amount)
 
     # Calculate initial income - expenditures in retirement, adjusted for inflation
     net_income_in_retirement = (I - E) * np.power(1 + inf, t1)
